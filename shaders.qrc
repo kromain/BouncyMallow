@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/shaders/vertex">
+        <file alias="z-bounce">z-bounce.vsh</file>
+    </qresource>
+    <qresource prefix="/shaders/fragment">
+        <file alias="basic-texture">basic-texture.fsh</file>
+    </qresource>
+</RCC>

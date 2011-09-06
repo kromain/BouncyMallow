@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="mallow-happy">res/mallow.png</file>
+        <file alias="mallow-neutral">res/nullows.png</file>
+    </qresource>
+</RCC>
