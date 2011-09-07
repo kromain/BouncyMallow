@@ -5,6 +5,13 @@
 #include <QMouseEvent>
 #include <QPropertyAnimation>
 
+#ifdef USE_FILE_SHADERS
+#define VERTEX_SHADER_PATH      "z-bounce.vsh"
+#define FRAGMENT_SHADER_PATH    "basic-texture.fsh"
+#else
+#define VERTEX_SHADER_PATH      ":/shaders/vertex/z-bounce"
+#define FRAGMENT_SHADER_PATH    ":/shaders/fragment/basic-texture"
+#endif
 
 static const GLdouble cubeSize = 1.0;
 
@@ -68,21 +75,12 @@ void GLSLTestWidget::initializeGL()
     m_shaderProgram = new QGLShaderProgram( context(),this );
 
     bool ok = false;
-    ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Vertex, ":/shaders/vertex/z-bounce");
+    ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Vertex, VERTEX_SHADER_PATH);
     if (!ok) {
         qDebug() << "Vertex shader compiling failed:" << m_shaderProgram->log();
         return;
     }
-    ok = m_shaderProgram->addShaderFromSourceCode(QGLShader::Fragment,
-        " uniform sampler2D tex;"
-        " varying vec4 outcolor;"
-        " varying vec2 texcoord;"
-        " void main(void)"
-        " {"
-        "   vec4 pixcolor = texture2D(tex, texcoord) * outcolor;"
-        "   if (pixcolor.a == 0.0) discard;"
-        "   gl_FragColor = pixcolor;"
-        " }");
+    ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Fragment, FRAGMENT_SHADER_PATH);
     if (!ok) {
         qDebug() << "Fragment shader compiling failed:" << m_shaderProgram->log();
         return;

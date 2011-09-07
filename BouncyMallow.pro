@@ -1,6 +1,8 @@
 TEMPLATE     = app
 QT          += opengl
 
+use_file_shaders:DEFINES += USE_FILE_SHADERS
+
 HEADERS     += widget.h
 SOURCES     += main.cpp widget.cpp
 
