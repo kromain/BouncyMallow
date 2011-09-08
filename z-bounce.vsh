@@ -1,34 +1,41 @@
-attribute float bounceRatio;
-attribute vec3  txoffset;
+// array attributes
+attribute   highp   vec4 aVertex;
+attribute   highp   vec2 aTexCoord;
 
-varying   vec4  outcolor;
-varying   vec2  texcoord;
+// value attributes
+attribute   highp   float vBounceRatio;
+attribute   highp   vec4  vTxOffset;
+
+// out vars
+varying     mediump vec4  outColor;
+varying     highp   vec2  outTexCoord;
 
 
 void main(void)
 {
     const vec2 origin = vec2(0.0,0.0);
 
-    vec3 vertex = gl_Vertex.xyz;
+    vec4 vertex = aVertex;
     float colorRatio = 1.0;
 
-    if (bounceRatio != 1.0) {
+    if (vBounceRatio != 1.0) {
         if (vertex.xy == origin) {
-            vertex.z *= 2.0 - bounceRatio;
-            colorRatio += vertex.z - gl_Vertex.z;
+            vertex.z *= vBounceRatio;
+            colorRatio += vertex.z - aVertex.z;
         }
         else if (vertex.xz == origin) {
-            vertex.y *= bounceRatio;
-            colorRatio += vertex.y - gl_Vertex.y;
+            vertex.y *= vBounceRatio;
+            colorRatio += vertex.y - aVertex.y;
         }
         else if (vertex.yz == origin) {
-            vertex.x *= bounceRatio;
-            colorRatio += vertex.x - gl_Vertex.x;
+            vertex.x *= vBounceRatio;
+            colorRatio += vertex.x - aVertex.x;
         }
     }
 
-    outcolor = vec4(colorRatio,colorRatio,colorRatio,1.0);
-    texcoord = gl_MultiTexCoord0.xy;
+    vertex += vTxOffset;
+    gl_Position = vertex;
 
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(vertex + txoffset, gl_Vertex.w);
+    outColor = vec4(colorRatio,colorRatio,colorRatio,1.0);
+    outTexCoord = aTexCoord;
 }

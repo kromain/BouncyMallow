@@ -14,16 +14,20 @@
 #endif
 
 static const GLdouble cubeSize = 1.0;
+static const int      numCubeFaces = 6;
+static const int      numCubeFaceVertices = 6;
+
 
 GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
     : QGLWidget(glFormat, parent),
       m_shaderProgram(0),
+      m_cubeVertices(),
+      m_cubeTexCoords(),
       m_mallowTexture(0),
-      m_object(0),
       m_bounceRatio(1.0),
       m_xOffset(0.0),
       m_yOffset(0.0),
-      m_zOffset(-2.0),
+      m_zOffset(0.0),
       m_lastMousePosition()
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
@@ -56,13 +60,9 @@ void GLSLTestWidget::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-1.0, +1.0, -1.0, +1.0, 1.0, 5.0);
+    initCubeData();
 
     m_mallowTexture = bindTexture( QPixmap( ":/images/mallow-happy" ) );
-
-    m_object = cube();
 
     const bool useGLSL = QGLShader::hasOpenGLShaders(QGLShader::Fragment) &&
                          QGLShader::hasOpenGLShaders(QGLShader::Vertex) &&
@@ -103,10 +103,17 @@ void GLSLTestWidget::paintGL()
 
     m_shaderProgram->bind();
 
-    m_shaderProgram->setAttributeValue("txoffset", QVector3D(m_xOffset,m_yOffset,m_zOffset));
-    m_shaderProgram->setAttributeValue("bounceRatio", (GLfloat) bounceRatio());
+    m_shaderProgram->enableAttributeArray("aVertex");
+    m_shaderProgram->setAttributeArray("aVertex", m_cubeVertices.constData());
+    m_shaderProgram->enableAttributeArray("aTexCoord");
+    m_shaderProgram->setAttributeArray("aTexCoord", m_cubeTexCoords.constData());
+    m_shaderProgram->setAttributeValue("vBounceRatio", (GLfloat) bounceRatio());
+    m_shaderProgram->setAttributeValue("vTxOffset", QVector3D(m_xOffset,m_yOffset,m_zOffset));
 
-    glCallList(m_object);
+
+    for (int face = 0; face < numCubeFaces; ++face) {
+        glDrawArrays(GL_TRIANGLE_FAN, face * numCubeFaceVertices, numCubeFaceVertices);
+    }
 }
 
 void GLSLTestWidget::resizeGL(int w, int h)
@@ -114,11 +121,14 @@ void GLSLTestWidget::resizeGL(int w, int h)
     glViewport(0, 0, w, h);
 }
 
-GLuint GLSLTestWidget::cube()
+void GLSLTestWidget::initCubeData()
 {
-    const int numfaces = 6;
-    const int numvertexes = 6;
-    static const int coords[numfaces][numvertexes][3] = {
+    if ( !m_cubeVertices.empty() || !m_cubeTexCoords.empty() ) {
+        // already initialized
+        return;
+    }
+
+    static const int coords[numCubeFaces][numCubeFaceVertices][3] = {
         { { 0, 0, -1 }, { +1, -1, -1 }, { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 }, { +1, -1, -1 } },
         { { 0, +1, 0 }, { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 }, { +1, +1, -1 } },
         { { +1, 0, 0 }, { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 }, { +1, -1, +1 } },
@@ -127,26 +137,17 @@ GLuint GLSLTestWidget::cube()
         { { 0, 0, +1 }, { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }, { -1, +1, +1 }, { -1, -1, +1 } }
     };
 
-    double halfCubeSize = cubeSize/2;
-    GLuint list = glGenLists(1);
-    glNewList(list, GL_COMPILE);
-    for (int i = 0; i < numfaces; ++i) {
-        glBegin(GL_TRIANGLE_FAN);
-        for (int j = 0; j < numvertexes; ++j) {
-            if ( j == 0 ) {
-                glTexCoord2d(0.5, 0.5);
+    for (int i = 0; i < numCubeFaces; ++i) {
+        for (int j = 0; j < numCubeFaceVertices; ++j) {
+            m_cubeVertices << QVector3D(coords[i][j][0], coords[i][j][1], coords[i][j][2]);
+            if ( !j ) {
+                m_cubeTexCoords << QVector2D(0.5, 0.5);
             } else {
                 // (1,0) (0,0) (0,1) (1,1) (1,0)
-                glTexCoord2d((j == 1 || j == 4 || j == 5) ? 0.9 : 0.1, (j == 3 || j == 4) ? 0.9 : 0.1);
+                m_cubeTexCoords << QVector2D((j == 1 || j == 4 || j == 5) ? 1.0 : 0.0, (j == 3 || j == 4) ? 1.0 : 0.0);
             }
-            glVertex3d(halfCubeSize * coords[i][j][0], halfCubeSize * coords[i][j][1],
-                       halfCubeSize * coords[i][j][2]);
         }
-        glEnd();
     }
-
-    glEndList();
-    return list;
 }
 
 void GLSLTestWidget::mousePressEvent(QMouseEvent *e)

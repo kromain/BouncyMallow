@@ -1,12 +1,13 @@
-uniform sampler2D tex;
-varying highp vec4 outcolor;
-varying highp vec2 texcoord;
+varying mediump vec4      outColor;
+varying highp   vec2      outTexCoord;
+
+uniform         sampler2D tex;
 
 void main(void)
 {
-    vec4 pixcolor = texture2D(tex, texcoord) * outcolor;
-    if (pixcolor.a == 0.0)
+    vec4 pixColor = texture2D(tex, outTexCoord) * outColor;
+    if (pixColor.a == 0.0)
         discard;
 
-    gl_FragColor = pixcolor;
+    gl_FragColor = pixColor;
 }

@@ -3,6 +3,10 @@
 
 #include <QGLWidget>
 #include <QPoint>
+#include <QVector>
+#include <QPair>
+#include <QVector2D>
+#include <QVector3D>
 
 class QGLShaderProgram;
 
@@ -31,12 +35,14 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
 private:
-    GLuint cube();
+    void initCubeData();
 
     QGLShaderProgram* m_shaderProgram;
 
+    QVector<QVector3D> m_cubeVertices;
+    QVector<QVector2D> m_cubeTexCoords;
+
     GLuint m_mallowTexture;
-    GLuint m_object;
 
     qreal m_bounceRatio;
 
