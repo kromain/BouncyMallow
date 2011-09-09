@@ -36,7 +36,7 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_lastMousePosition()
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
-    pressAnimation->setEndValue( (GLfloat) 1.5);
+    pressAnimation->setEndValue( (GLfloat) 0.5);
     pressAnimation->setDuration(500);
     pressAnimation->setEasingCurve(QEasingCurve::OutCubic);
     connect(this, SIGNAL(pressed(QPoint)), pressAnimation, SLOT(start()));
