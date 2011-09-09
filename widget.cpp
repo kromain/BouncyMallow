@@ -4,6 +4,8 @@
 #include <QGLShaderProgram>
 #include <QMouseEvent>
 #include <QPropertyAnimation>
+#include <QMatrix4x4>
+#include <qmath.h>
 
 #ifdef USE_FILE_SHADERS
 #define VERTEX_SHADER_PATH      "z-bounce.vsh"
@@ -13,11 +15,14 @@
 #define FRAGMENT_SHADER_PATH    ":/shaders/fragment/basic-texture"
 #endif
 
-static const GLdouble cubeSize = 1.0;
-static const int      numCubeFaces = 6;
-static const int      numCubeFaceVertices = 6;
+namespace {
+    const int      numCubeFaces = 6;
+    const int      numCubeFaceVertices = 6;
 
-
+    qreal deg2rad( int deg ) {
+        return (deg % 360) * M_PI / 180;
+    }
+}
 GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
     : QGLWidget(glFormat, parent),
       m_shaderProgram(0),
@@ -25,9 +30,9 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_cubeTexCoords(),
       m_mallowTexture(0),
       m_bounceRatio(1.0),
-      m_xOffset(0.0),
-      m_yOffset(0.0),
-      m_zOffset(0.0),
+      m_hRotation(0),
+      m_vRotation(0),
+      m_zOffset(-5.0),
       m_lastMousePosition()
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
@@ -108,8 +113,21 @@ void GLSLTestWidget::paintGL()
     m_shaderProgram->enableAttributeArray("aTexCoord");
     m_shaderProgram->setAttributeArray("aTexCoord", m_cubeTexCoords.constData());
     m_shaderProgram->setAttributeValue("vBounceRatio", (GLfloat) bounceRatio());
-    m_shaderProgram->setAttributeValue("vTxOffset", QVector3D(m_xOffset,m_yOffset,m_zOffset));
 
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.perspective(45.0f, 1.0, 1.0f, 20.0f);
+    m_shaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
+
+    const QVector3D cameraPos( qSin( deg2rad(m_hRotation) ) * qCos( deg2rad(m_vRotation) ) * m_zOffset,
+                               qSin( deg2rad(m_vRotation) ) * m_zOffset,
+                               qCos( deg2rad(m_hRotation) ) * qCos( deg2rad(m_vRotation) ) * m_zOffset) ;
+    QMatrix4x4 cameraMatrix;
+    cameraMatrix.lookAt( cameraPos, QVector3D(), QVector3D(0, (qAbs(m_vRotation) < 90 || qAbs(m_vRotation) > 270) ? 1 : -1, 0) );
+    m_shaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
+
+#ifdef DEBUG_CAMERA
+    qDebug() << "Camera position:" <<  cameraPos << "x-rotation=" << m_hRotation << "y-rotation=" << m_vRotation;
+#endif
 
     for (int face = 0; face < numCubeFaces; ++face) {
         glDrawArrays(GL_TRIANGLE_FAN, face * numCubeFaceVertices, numCubeFaceVertices);
@@ -169,11 +187,18 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if ( e->buttons() & Qt::RightButton ) {
-        m_xOffset += (e->pos().x() - m_lastMousePosition.x()) * 2.0 / (double)width();
-        m_yOffset += (m_lastMousePosition.y() - e->pos().y()) * 2.0 / (double)height();
+        m_hRotation += (m_lastMousePosition.x() - e->pos().x());
+        m_vRotation += (m_lastMousePosition.y() - e->pos().y());
+
         m_lastMousePosition = e->pos();
         updateGL();
     }
+}
+
+void GLSLTestWidget::wheelEvent(QWheelEvent *e)
+{
+    m_zOffset += ( e->delta() > 0 ) ? 0.1 : -0.1;
+    updateGL();
 }
 
 

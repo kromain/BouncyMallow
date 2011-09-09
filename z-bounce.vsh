@@ -4,7 +4,10 @@ attribute   highp   vec2 aTexCoord;
 
 // value attributes
 attribute   highp   float vBounceRatio;
-attribute   highp   vec4  vTxOffset;
+
+// uniform attributes
+uniform     highp   mat4  cameraMatrix;
+uniform     highp   mat4  projectionMatrix;
 
 // out vars
 varying     mediump vec4  outColor;
@@ -33,8 +36,7 @@ void main(void)
         }
     }
 
-    vertex += vTxOffset;
-    gl_Position = vertex;
+    gl_Position = projectionMatrix * cameraMatrix * vertex;
 
     outColor = vec4(colorRatio,colorRatio,colorRatio,1.0);
     outTexCoord = aTexCoord;

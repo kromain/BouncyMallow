@@ -34,6 +34,7 @@ protected:
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
+    void wheelEvent(QWheelEvent *);
 private:
     void initCubeData();
 
@@ -46,8 +47,8 @@ private:
 
     qreal m_bounceRatio;
 
-    qreal m_xOffset;
-    qreal m_yOffset;
+    int m_hRotation;
+    int m_vRotation;
     qreal m_zOffset;
 
     QPoint m_lastMousePosition;
