@@ -10,7 +10,7 @@ uniform     highp   mat4  cameraMatrix;
 uniform     highp   mat4  projectionMatrix;
 
 // out vars
-varying     mediump vec4  outColor;
+varying     highp   vec4  outColor;
 varying     highp   vec2  outTexCoord;
 
 

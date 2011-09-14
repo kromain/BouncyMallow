@@ -77,7 +77,7 @@ void GLSLTestWidget::initializeGL()
     if (!useGLSL)
         return;
 
-    m_shaderProgram = new QGLShaderProgram( context(),this );
+    m_shaderProgram = new QGLShaderProgram(this);
 
     bool ok = false;
     ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Vertex, VERTEX_SHADER_PATH);
