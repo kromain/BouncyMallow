@@ -30,8 +30,8 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_cubeTexCoords(),
       m_mallowTexture(0),
       m_bounceRatio(1.0),
-      m_hRotation(0),
-      m_vRotation(0),
+      m_hRotation(45),
+      m_vRotation(-45),
       m_zOffset(-5.0),
       m_lastMousePosition()
 {
