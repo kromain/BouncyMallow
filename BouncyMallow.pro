@@ -10,7 +10,9 @@ RESOURCES   += images.qrc shaders.qrc
 
 OTHER_FILES += \
     z-bounce.vsh \
-    basic-texture.fsh
+    simple-camera-projection.vsh \
+    basic-texture.fsh \
+    cubemap-texture.fsh \
 
 
 

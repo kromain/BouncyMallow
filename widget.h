@@ -37,13 +37,17 @@ protected:
     void wheelEvent(QWheelEvent *);
 private:
     void initCubeData();
+    void initEnvironmentData();
 
-    QGLShaderProgram* m_shaderProgram;
+    QGLShaderProgram*  m_cubeShaderProgram;
+    QGLShaderProgram*  m_envShaderProgram;
+
+    QVector<QVector3D> m_envVertices;
+    GLuint             m_cubemapTexture;
 
     QVector<QVector3D> m_cubeVertices;
     QVector<QVector2D> m_cubeTexCoords;
-
-    GLuint m_mallowTexture;
+    QVector<GLuint>    m_mallowTextures;
 
     qreal m_bounceRatio;
 

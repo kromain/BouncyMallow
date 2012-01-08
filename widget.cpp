@@ -8,16 +8,38 @@
 #include <qmath.h>
 
 #ifdef USE_FILE_SHADERS
-#define VERTEX_SHADER_PATH      "z-bounce.vsh"
-#define FRAGMENT_SHADER_PATH    "basic-texture.fsh"
+#define CUBE_VERTEX_SHADER_PATH      "z-bounce.vsh"
+#define CUBE_FRAGMENT_SHADER_PATH    "basic-texture.fsh"
+#define ENV_VERTEX_SHADER_PATH      "simple-camera-projection.vsh"
+#define ENV_FRAGMENT_SHADER_PATH    "cubemap-texture.fsh"
 #else
-#define VERTEX_SHADER_PATH      ":/shaders/vertex/z-bounce"
-#define FRAGMENT_SHADER_PATH    ":/shaders/fragment/basic-texture"
+#define CUBE_VERTEX_SHADER_PATH      ":/shaders/vertex/z-bounce"
+#define CUBE_FRAGMENT_SHADER_PATH    ":/shaders/fragment/basic-texture"
+#define ENV_VERTEX_SHADER_PATH      ":/shaders/vertex/simple-camera-projection"
+#define ENV_FRAGMENT_SHADER_PATH    ":/shaders/fragment/cubemap-texture"
+#endif
+
+// Windows lacks the cubemap definitions in its headers, but the drivers handle those fine
+#ifndef GL_TEXTURE_CUBE_MAP
+#define GL_TEXTURE_CUBE_MAP             0x8513
+#define GL_TEXTURE_BINDING_CUBE_MAP     0x8514
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_X  0x8515
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_X  0x8516
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Y  0x8517
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Y  0x8518
+#define GL_TEXTURE_CUBE_MAP_POSITIVE_Z  0x8519
+#define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z  0x851A
+#endif
+
+// For Windows which only has the _EXT one
+#ifndef GL_BGRA
+#define GL_BGRA GL_BGRA_EXT
 #endif
 
 namespace {
     const int      numCubeFaces = 6;
     const int      numCubeFaceVertices = 6;
+    const int      numCubemapFaceVertices = 4;
 
     qreal deg2rad( int deg ) {
         return (deg % 360) * M_PI / 180;
@@ -25,10 +47,13 @@ namespace {
 }
 GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
     : QGLWidget(glFormat, parent),
-      m_shaderProgram(0),
+      m_cubeShaderProgram(0),
+      m_envShaderProgram(0),
+      m_envVertices(),
+      m_cubemapTexture(0),
       m_cubeVertices(),
       m_cubeTexCoords(),
-      m_mallowTexture(0),
+      m_mallowTextures(),
       m_bounceRatio(1.0),
       m_hRotation(45),
       m_vRotation(-45),
@@ -52,7 +77,9 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
 
 GLSLTestWidget::~GLSLTestWidget()
 {
-    deleteTexture(m_mallowTexture);
+    Q_FOREACH( GLuint tex, m_mallowTextures ) {
+        deleteTexture(tex);
+    }
 }
 
 void GLSLTestWidget::initializeGL()
@@ -65,9 +92,8 @@ void GLSLTestWidget::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
+    initEnvironmentData();
     initCubeData();
-
-    m_mallowTexture = bindTexture( QPixmap( ":/images/mallow-happy" ) );
 
     const bool useGLSL = QGLShader::hasOpenGLShaders(QGLShader::Fragment) &&
                          QGLShader::hasOpenGLShaders(QGLShader::Vertex) &&
@@ -77,58 +103,91 @@ void GLSLTestWidget::initializeGL()
     if (!useGLSL)
         return;
 
-    m_shaderProgram = new QGLShaderProgram(this);
+    m_cubeShaderProgram = new QGLShaderProgram(this);
 
     bool ok = false;
-    ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Vertex, VERTEX_SHADER_PATH);
+    ok = m_cubeShaderProgram->addShaderFromSourceFile(QGLShader::Vertex, CUBE_VERTEX_SHADER_PATH);
     if (!ok) {
-        qDebug() << "Vertex shader compiling failed:" << m_shaderProgram->log();
+        qDebug() << "Vertex shader compiling failed:" << m_cubeShaderProgram->log();
         return;
     }
-    ok = m_shaderProgram->addShaderFromSourceFile(QGLShader::Fragment, FRAGMENT_SHADER_PATH);
+    ok = m_cubeShaderProgram->addShaderFromSourceFile(QGLShader::Fragment, CUBE_FRAGMENT_SHADER_PATH);
     if (!ok) {
-        qDebug() << "Fragment shader compiling failed:" << m_shaderProgram->log();
-        return;
-    }
-
-    ok = m_shaderProgram->link();
-    if (!ok) {
-        qDebug() << "Shader program linking failed:" << m_shaderProgram->log();
+        qDebug() << "Fragment shader compiling failed:" << m_cubeShaderProgram->log();
         return;
     }
 
+    ok = m_cubeShaderProgram->link();
+    if (!ok) {
+        qDebug() << "Shader program linking failed:" << m_cubeShaderProgram->log();
+        return;
+    }
+
+    m_envShaderProgram = new QGLShaderProgram(this);
+
+    ok = m_envShaderProgram->addShaderFromSourceFile(QGLShader::Vertex, ENV_VERTEX_SHADER_PATH);
+    if (!ok) {
+        qDebug() << "Vertex shader compiling failed:" << m_envShaderProgram->log();
+        return;
+    }
+    ok = m_envShaderProgram->addShaderFromSourceFile(QGLShader::Fragment, ENV_FRAGMENT_SHADER_PATH);
+    if (!ok) {
+        qDebug() << "Fragment shader compiling failed:" << m_envShaderProgram->log();
+        return;
+    }
+
+    ok = m_envShaderProgram->link();
+    if (!ok) {
+        qDebug() << "Shader program linking failed:" << m_envShaderProgram->log();
+        return;
+    }
 }
+
 
 void GLSLTestWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    m_shaderProgram->bind();
-
-    m_shaderProgram->enableAttributeArray("aVertex");
-    m_shaderProgram->setAttributeArray("aVertex", m_cubeVertices.constData());
-    m_shaderProgram->enableAttributeArray("aTexCoord");
-    m_shaderProgram->setAttributeArray("aTexCoord", m_cubeTexCoords.constData());
-    m_shaderProgram->setAttributeValue("vBounceRatio", (GLfloat) bounceRatio());
-
-    QMatrix4x4 projectionMatrix;
-    projectionMatrix.perspective(45.0f, 1.0, 1.0f, 20.0f);
-    m_shaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
-
     const QVector3D cameraPos( qSin( deg2rad(m_hRotation) ) * qCos( deg2rad(m_vRotation) ) * m_zOffset,
                                qSin( deg2rad(m_vRotation) ) * m_zOffset,
                                qCos( deg2rad(m_hRotation) ) * qCos( deg2rad(m_vRotation) ) * m_zOffset) ;
     QMatrix4x4 cameraMatrix;
     cameraMatrix.lookAt( cameraPos, QVector3D(), QVector3D(0, (qAbs(m_vRotation) < 90 || qAbs(m_vRotation) > 270) ? 1 : -1, 0) );
-    m_shaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
-
 #ifdef DEBUG_CAMERA
     qDebug() << "Camera position:" <<  cameraPos << "x-rotation=" << m_hRotation << "y-rotation=" << m_vRotation;
 #endif
 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    m_envShaderProgram->bind();
+
+    m_envShaderProgram->enableAttributeArray("aVertex");
+    m_envShaderProgram->setAttributeArray("aVertex", m_envVertices.constData());
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.perspective(45.0f, 1.0f, 1.0f, 20.0f);
+    m_envShaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
+    m_envShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
+
+    glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemapTexture );
+    glDrawArrays(GL_QUADS, 0, numCubeFaces * numCubemapFaceVertices);
+
+#if 0
+    m_cubeShaderProgram->bind();
+
+    m_cubeShaderProgram->enableAttributeArray("aVertex");
+    m_cubeShaderProgram->setAttributeArray("aVertex", m_cubeVertices.constData());
+    m_cubeShaderProgram->enableAttributeArray("aTexCoord");
+    m_cubeShaderProgram->setAttributeArray("aTexCoord", m_cubeTexCoords.constData());
+    m_cubeShaderProgram->setAttributeValue("vBounceRatio", (GLfloat) bounceRatio());
+
+    QMatrix4x4 projectionMatrix;
+    projectionMatrix.perspective(45.0f, 1.0f, 1.0f, 20.0f);
+    m_cubeShaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
+    m_cubeShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
+
     for (int face = 0; face < numCubeFaces; ++face) {
+        glBindTexture( GL_TEXTURE_2D, m_mallowTextures.at( face % m_mallowTextures.size() ) );
         glDrawArrays(GL_TRIANGLE_FAN, face * numCubeFaceVertices, numCubeFaceVertices);
     }
+#endif
 }
 
 void GLSLTestWidget::resizeGL(int w, int h)
@@ -162,6 +221,51 @@ void GLSLTestWidget::initCubeData()
                 m_cubeTexCoords << QVector2D((j == 1 || j == 4 || j == 5) ? 1.0 : 0.0, (j == 3 || j == 4) ? 1.0 : 0.0);
             }
         }
+    }
+
+    m_mallowTextures << bindTexture( QImage( ":/images/mallow-happy" ) );
+    m_mallowTextures << bindTexture( QImage( ":/images/mallow-neutral" ) );
+    m_mallowTextures << bindTexture( QImage( ":/images/mallow-icy" ) );
+}
+
+void GLSLTestWidget::initEnvironmentData()
+{
+    if ( !m_envVertices.empty() ) {
+        // already initialized
+        return;
+    }
+
+    glGenTextures(1, &m_cubemapTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemapTexture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    static const int coords[numCubeFaces][numCubemapFaceVertices][3] = {
+        { { +1, -1, -1 }, { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 } },
+        { { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 } },
+        { { +1, -1, +1 }, { +1, -1, -1 }, { +1, +1, -1 }, { +1, +1, +1 } },
+        { { -1, -1, -1 }, { -1, -1, +1 }, { -1, +1, +1 }, { -1, +1, -1 } },
+        { { +1, -1, +1 }, { -1, -1, +1 }, { -1, -1, -1 }, { +1, -1, -1 } },
+        { { -1, -1, +1 }, { +1, -1, +1 }, { +1, +1, +1 }, { -1, +1, +1 } }
+    };
+
+    static const int mapFaces[numCubeFaces] = {
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+    };
+
+
+    for (int i = 0; i < numCubeFaces; ++i) {
+        for (int j = 0; j < numCubemapFaceVertices; ++j) {
+            m_envVertices << QVector3D(coords[i][j][0], coords[i][j][1], coords[i][j][2]);
+        }
+
+        const QImage faceImage( QString(":/cubemaps/mountain/%1").arg(i+1) );
+        glTexImage2D( mapFaces[i], 0, GL_RGBA, faceImage.width(), faceImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, faceImage.bits() );
     }
 }
 

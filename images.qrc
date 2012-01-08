@@ -2,5 +2,15 @@
     <qresource prefix="/images">
         <file alias="mallow-happy">res/mallow.png</file>
         <file alias="mallow-neutral">res/nullows.png</file>
+        <file alias="mallow-icy">res/icelows.png</file>
+    </qresource>
+    <qresource prefix="/cubemaps/mountain">
+        <file alias="1">res/cubemap_mountain/mountain1.png</file>
+        <file alias="2">res/cubemap_mountain/mountain2.png</file>
+        <file alias="3">res/cubemap_mountain/mountain3.png</file>
+        <file alias="4">res/cubemap_mountain/mountain4.png</file>
+        <file alias="5">res/cubemap_mountain/mountain5.png</file>
+        <file alias="6">res/cubemap_mountain/mountain6.png</file>
+        <file alias="normalmap">res/cubemap_mountain/NewNormalMap.png</file>
     </qresource>
 </RCC>
