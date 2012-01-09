@@ -41,6 +41,8 @@ namespace {
     const int      numCubeFaceVertices = 6;
     const int      numCubemapFaceVertices = 4;
 
+    const int cubeSideLength = 50;
+
     qreal deg2rad( int deg ) {
         return (deg % 360) * M_PI / 180;
     }
@@ -55,8 +57,8 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_cubeTexCoords(),
       m_mallowTextures(),
       m_bounceRatio(1.0),
-      m_hRotation(45),
-      m_vRotation(-45),
+      m_hRotation(0),
+      m_vRotation(0),
       m_zOffset(-5.0),
       m_lastMousePosition()
 {
@@ -162,14 +164,13 @@ void GLSLTestWidget::paintGL()
     m_envShaderProgram->enableAttributeArray("aVertex");
     m_envShaderProgram->setAttributeArray("aVertex", m_envVertices.constData());
     QMatrix4x4 projectionMatrix;
-    projectionMatrix.perspective(45.0f, 1.0f, 1.0f, 20.0f);
+    projectionMatrix.frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1000.0f);
     m_envShaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
     m_envShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
 
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemapTexture );
     glDrawArrays(GL_QUADS, 0, numCubeFaces * numCubemapFaceVertices);
 
-#if 0
     m_cubeShaderProgram->bind();
 
     m_cubeShaderProgram->enableAttributeArray("aVertex");
@@ -178,8 +179,6 @@ void GLSLTestWidget::paintGL()
     m_cubeShaderProgram->setAttributeArray("aTexCoord", m_cubeTexCoords.constData());
     m_cubeShaderProgram->setAttributeValue("vBounceRatio", (GLfloat) bounceRatio());
 
-    QMatrix4x4 projectionMatrix;
-    projectionMatrix.perspective(45.0f, 1.0f, 1.0f, 20.0f);
     m_cubeShaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
     m_cubeShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
 
@@ -187,7 +186,6 @@ void GLSLTestWidget::paintGL()
         glBindTexture( GL_TEXTURE_2D, m_mallowTextures.at( face % m_mallowTextures.size() ) );
         glDrawArrays(GL_TRIANGLE_FAN, face * numCubeFaceVertices, numCubeFaceVertices);
     }
-#endif
 }
 
 void GLSLTestWidget::resizeGL(int w, int h)
@@ -235,11 +233,6 @@ void GLSLTestWidget::initEnvironmentData()
         return;
     }
 
-    glGenTextures(1, &m_cubemapTexture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemapTexture);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     static const int coords[numCubeFaces][numCubemapFaceVertices][3] = {
         { { +1, -1, -1 }, { -1, -1, -1 }, { -1, +1, -1 }, { +1, +1, -1 } },
         { { +1, +1, -1 }, { -1, +1, -1 }, { -1, +1, +1 }, { +1, +1, +1 } },
@@ -258,10 +251,14 @@ void GLSLTestWidget::initEnvironmentData()
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
     };
 
+    glGenTextures(1, &m_cubemapTexture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemapTexture);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     for (int i = 0; i < numCubeFaces; ++i) {
         for (int j = 0; j < numCubemapFaceVertices; ++j) {
-            m_envVertices << QVector3D(coords[i][j][0], coords[i][j][1], coords[i][j][2]);
+            m_envVertices << QVector3D(coords[i][j][0], coords[i][j][1], coords[i][j][2]) * cubeSideLength;
         }
 
         const QImage faceImage( QString(":/cubemaps/mountain/%1").arg(i+1) );
