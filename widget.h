@@ -56,8 +56,8 @@ private:
 
     qreal m_bounceRatio;
 
-    int m_hRotation;
-    int m_vRotation;
+    qreal m_hRotation;
+    qreal m_vRotation;
     qreal m_zOffset;
 
     QPoint m_lastMousePosition;

@@ -43,8 +43,15 @@ namespace {
 
     const int cubeSideLength = 50;
 
-    qreal deg2rad( int deg ) {
-        return (deg % 360) * M_PI / 180;
+    const qreal xPanningMultiplier = 0.3;
+    const qreal yPanningMultiplier = 0.3;
+
+    qreal deg2rad( qreal deg ) {
+        qreal adjustedDeg = deg;
+        if ( qAbs(deg) >= 360.0 ) {
+            adjustedDeg += 360.0 * (deg > 0.0 ? -1: 1);
+        }
+        return adjustedDeg * M_PI / 180;
     }
 }
 GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
@@ -57,8 +64,8 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_cubeTexCoords(),
       m_mallowTextures(),
       m_bounceRatio(1.0),
-      m_hRotation(0),
-      m_vRotation(0),
+      m_hRotation(0.0),
+      m_vRotation(0.0),
       m_zOffset(-5.0),
       m_lastMousePosition(),
       m_secondLastMousePosition()
@@ -78,7 +85,7 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
     connect(releaseAnimation, SIGNAL(valueChanged(QVariant)), this, SLOT(updateGL()));
 
     m_kineticAnimation = new QPropertyAnimation(this, "", this);
-    m_kineticAnimation->setEndValue( QPoint(0,0) );
+    m_kineticAnimation->setEndValue( QPointF(0,0) );
     m_kineticAnimation->setDuration(5000);
     m_kineticAnimation->setEasingCurve(QEasingCurve::OutExpo);
     connect(m_kineticAnimation, SIGNAL(valueChanged(QVariant)), this, SLOT(updateKineticScrolling(QVariant)));
@@ -291,10 +298,10 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
     if ( e->button() == Qt::LeftButton ) {
         emit released();
     } else if ( !m_secondLastMousePosition.isNull() ) {
-        const QPoint delta = m_lastMousePosition - m_secondLastMousePosition;
+        const QPointF delta = m_lastMousePosition - m_secondLastMousePosition;
 
-        if ( delta.manhattanLength() > 5 ) {
-            m_kineticAnimation->setStartValue( delta );
+        if ( delta.manhattanLength() > 5.0 ) {
+            m_kineticAnimation->setStartValue( QPointF(delta.x() * xPanningMultiplier, delta.y() * yPanningMultiplier) );
             m_kineticAnimation->start();
         }
     }
@@ -303,8 +310,8 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if ( e->buttons() & Qt::RightButton ) {
-        m_hRotation += m_lastMousePosition.x() - e->pos().x();
-        m_vRotation = qBound(-89, m_vRotation + m_lastMousePosition.y() - e->pos().y(), 89);
+        m_hRotation += (m_lastMousePosition.x() - e->pos().x()) * xPanningMultiplier;
+        m_vRotation = qBound(-89.0, m_vRotation + (m_lastMousePosition.y() - e->pos().y()) * yPanningMultiplier, 89.0);
 
         m_secondLastMousePosition = m_lastMousePosition;
         m_lastMousePosition = e->pos();
@@ -320,8 +327,8 @@ void GLSLTestWidget::wheelEvent(QWheelEvent *e)
 
 void GLSLTestWidget::updateKineticScrolling(const QVariant &value)
 {
-    m_hRotation -= value.toPoint().x();
-    m_vRotation = qBound(-89, m_vRotation - value.toPoint().y(), 89);
+    m_hRotation -= value.toPointF().x();
+    m_vRotation = qBound(-89.0, m_vRotation - value.toPointF().y(), 89.0);
     updateGL();
 }
 
