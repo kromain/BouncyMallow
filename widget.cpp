@@ -152,7 +152,7 @@ void GLSLTestWidget::paintGL()
                                qSin( deg2rad(m_vRotation) ) * m_zOffset,
                                qCos( deg2rad(m_hRotation) ) * qCos( deg2rad(m_vRotation) ) * m_zOffset) ;
     QMatrix4x4 cameraMatrix;
-    cameraMatrix.lookAt( cameraPos, QVector3D(), QVector3D(0, (qAbs(m_vRotation) < 90 || qAbs(m_vRotation) > 270) ? 1 : -1, 0) );
+    cameraMatrix.lookAt( cameraPos, QVector3D(), QVector3D(0, 1, 0) );
 #ifdef DEBUG_CAMERA
     qDebug() << "Camera position:" <<  cameraPos << "x-rotation=" << m_hRotation << "y-rotation=" << m_vRotation;
 #endif
@@ -285,8 +285,8 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if ( e->buttons() & Qt::RightButton ) {
-        m_hRotation += (m_lastMousePosition.x() - e->pos().x());
-        m_vRotation += (m_lastMousePosition.y() - e->pos().y());
+        m_hRotation += m_lastMousePosition.x() - e->pos().x();
+        m_vRotation = qBound(-89, m_vRotation + m_lastMousePosition.y() - e->pos().y(), 89);
 
         m_lastMousePosition = e->pos();
         updateGL();
@@ -295,7 +295,7 @@ void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 
 void GLSLTestWidget::wheelEvent(QWheelEvent *e)
 {
-    m_zOffset += ( e->delta() > 0 ) ? 0.1 : -0.1;
+    m_zOffset = qBound(cubeSideLength * -1.0, m_zOffset + (( e->delta() > 0 ) ? 0.1 : -0.1), -3.0);
     updateGL();
 }
 
