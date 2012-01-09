@@ -60,7 +60,8 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_hRotation(0),
       m_vRotation(0),
       m_zOffset(-5.0),
-      m_lastMousePosition()
+      m_lastMousePosition(),
+      m_secondLastMousePosition()
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
     pressAnimation->setEndValue( (GLfloat) 0.5);
@@ -75,6 +76,13 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
     releaseAnimation->setEasingCurve(QEasingCurve::OutElastic);
     connect(this, SIGNAL(released()), releaseAnimation, SLOT(start()));
     connect(releaseAnimation, SIGNAL(valueChanged(QVariant)), this, SLOT(updateGL()));
+
+    m_kineticAnimation = new QPropertyAnimation(this, "", this);
+    m_kineticAnimation->setEndValue( QPoint(0,0) );
+    m_kineticAnimation->setDuration(5000);
+    m_kineticAnimation->setEasingCurve(QEasingCurve::OutExpo);
+    connect(m_kineticAnimation, SIGNAL(valueChanged(QVariant)), this, SLOT(updateKineticScrolling(QVariant)));
+
 }
 
 GLSLTestWidget::~GLSLTestWidget()
@@ -271,7 +279,10 @@ void GLSLTestWidget::mousePressEvent(QMouseEvent *e)
     if ( e->button() == Qt::LeftButton ) {
         emit pressed(e->pos());
     } else {
+        m_secondLastMousePosition = QPoint();
         m_lastMousePosition = e->pos();
+
+        m_kineticAnimation->stop();
     }
 }
 
@@ -279,6 +290,13 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 {
     if ( e->button() == Qt::LeftButton ) {
         emit released();
+    } else if ( !m_secondLastMousePosition.isNull() ) {
+        const QPoint delta = m_lastMousePosition - m_secondLastMousePosition;
+
+        if ( delta.manhattanLength() > 5 ) {
+            m_kineticAnimation->setStartValue( delta );
+            m_kineticAnimation->start();
+        }
     }
 }
 
@@ -288,6 +306,7 @@ void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
         m_hRotation += m_lastMousePosition.x() - e->pos().x();
         m_vRotation = qBound(-89, m_vRotation + m_lastMousePosition.y() - e->pos().y(), 89);
 
+        m_secondLastMousePosition = m_lastMousePosition;
         m_lastMousePosition = e->pos();
         updateGL();
     }
@@ -296,6 +315,13 @@ void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 void GLSLTestWidget::wheelEvent(QWheelEvent *e)
 {
     m_zOffset = qBound(cubeSideLength * -1.0, m_zOffset + (( e->delta() > 0 ) ? 0.1 : -0.1), -3.0);
+    updateGL();
+}
+
+void GLSLTestWidget::updateKineticScrolling(const QVariant &value)
+{
+    m_hRotation -= value.toPoint().x();
+    m_vRotation = qBound(-89, m_vRotation - value.toPoint().y(), 89);
     updateGL();
 }
 

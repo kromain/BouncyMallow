@@ -9,6 +9,7 @@
 #include <QVector3D>
 
 class QGLShaderProgram;
+class QVariantAnimation;
 
 class GLSLTestWidget : public QGLWidget
 {
@@ -35,6 +36,10 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
     void wheelEvent(QWheelEvent *);
+
+private slots:
+    void updateKineticScrolling( const QVariant& value );
+
 private:
     void initCubeData();
     void initEnvironmentData();
@@ -56,6 +61,9 @@ private:
     qreal m_zOffset;
 
     QPoint m_lastMousePosition;
+    QPoint m_secondLastMousePosition;
+
+    QVariantAnimation* m_kineticAnimation;
 };
 
 #endif // WIDGET_H
