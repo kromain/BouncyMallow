@@ -69,7 +69,7 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_bounceRatio(1.0),
       m_hRotation(0.0),
       m_vRotation(0.0),
-      m_zOffset(-5.0),
+      m_zOffset(-4.0),
       m_lastMousePosition(),
       m_secondLastMousePosition(),
       m_kineticAnimation(0),
@@ -78,8 +78,8 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
     pressAnimation->setEndValue( (GLfloat) 0.5);
-    pressAnimation->setDuration(500);
-    pressAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    pressAnimation->setDuration(250);
+    pressAnimation->setEasingCurve(QEasingCurve::OutExpo);
     connect(this, SIGNAL(pressed(QPoint)), pressAnimation, SLOT(start()));
     connect(pressAnimation, SIGNAL(valueChanged(QVariant)), this, SLOT(updateGL()));
 
@@ -296,9 +296,8 @@ void GLSLTestWidget::mousePressEvent(QMouseEvent *e)
         m_kineticAnimation->stop();
 
         // TODO: add real hit detection
-        const QRect mallowRect( rect().topLeft() + rect().center() * 0.8, rect().bottomRight() - rect().center() * 0.8);
+        const QRect mallowRect( rect().topLeft() + rect().center() * 0.5, rect().bottomRight() - rect().center() * 0.5);
         m_spinMallow = mallowRect.contains(e->pos());
-        qDebug() << "spinMallow:" << m_spinMallow;
 
         if ( m_spinMallow ) {
             emit pressed(e->pos());
@@ -323,7 +322,7 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    const QPointF delta = e->pos() - m_lastMousePosition;
+    const QPoint delta = e->pos() - m_lastMousePosition;
     if ( m_spinMallow ) {
         m_mallowRotationMatrix.rotate( delta.manhattanLength(), -delta.y(), -delta.x());
     } else {
