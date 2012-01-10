@@ -31,11 +31,6 @@
 #define GL_TEXTURE_CUBE_MAP_NEGATIVE_Z  0x851A
 #endif
 
-// For Windows which only has the _EXT one
-#ifndef GL_BGRA
-#define GL_BGRA GL_BGRA_EXT
-#endif
-
 namespace {
     const int      numCubeFaces = 6;
     const int      numCubeFaceVertices = 6;
@@ -184,7 +179,7 @@ void GLSLTestWidget::paintGL()
     m_envShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
 
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemapTexture );
-    glDrawArrays(GL_QUADS, 0, numCubeFaces * numCubemapFaceVertices);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, numCubeFaces * numCubemapFaceVertices);
 
     m_cubeShaderProgram->bind();
 
@@ -277,7 +272,7 @@ void GLSLTestWidget::initEnvironmentData()
         }
 
         const QImage faceImage( QString(":/cubemaps/mountain/%1").arg(i+1) );
-        glTexImage2D( mapFaces[i], 0, GL_RGBA, faceImage.width(), faceImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, faceImage.bits() );
+        glTexImage2D( mapFaces[i], 0, GL_RGBA, faceImage.width(), faceImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, faceImage.bits() );
     }
 }
 
@@ -311,7 +306,7 @@ void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
     if ( e->buttons() & Qt::RightButton ) {
         m_hRotation += (m_lastMousePosition.x() - e->pos().x()) * xPanningMultiplier;
-        m_vRotation = qBound(-89.0, m_vRotation + (m_lastMousePosition.y() - e->pos().y()) * yPanningMultiplier, 89.0);
+        m_vRotation = qBound(-89.0f, m_vRotation + (m_lastMousePosition.y() - e->pos().y()) * yPanningMultiplier, 89.0f);
 
         m_secondLastMousePosition = m_lastMousePosition;
         m_lastMousePosition = e->pos();
@@ -321,14 +316,14 @@ void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 
 void GLSLTestWidget::wheelEvent(QWheelEvent *e)
 {
-    m_zOffset = qBound(cubeSideLength * -1.0, m_zOffset + (( e->delta() > 0 ) ? 0.1 : -0.1), -3.0);
+    m_zOffset = qBound(cubeSideLength * -1.0f, m_zOffset + (( e->delta() > 0 ) ? 0.1f : -0.1f), -3.0f);
     updateGL();
 }
 
 void GLSLTestWidget::updateKineticScrolling(const QVariant &value)
 {
     m_hRotation -= value.toPointF().x();
-    m_vRotation = qBound(-89.0, m_vRotation - value.toPointF().y(), 89.0);
+    m_vRotation = qBound(-89.0f, m_vRotation - value.toPointF().y(), 89.0f);
     updateGL();
 }
 
