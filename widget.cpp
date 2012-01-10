@@ -236,14 +236,12 @@ void GLSLTestWidget::initCubeData()
                 m_cubeTexCoords << QVector2D(0.5, 0.5);
             } else {
                 // (1,0) (0,0) (0,1) (1,1) (1,0)
-                m_cubeTexCoords << QVector2D((j == 1 || j == 4 || j == 5) ? 1.0 : 0.0, (j == 3 || j == 4) ? 1.0 : 0.0);
+                m_cubeTexCoords << QVector2D((j == 1 || j == 4 || j == 5) ? 0.0 : 1.0, (j == 3 || j == 4) ? 0.0 : 1.0);
             }
         }
     }
 
-    m_mallowTextures << bindTexture( QImage( ":/images/mallow-happy" ) );
-    m_mallowTextures << bindTexture( QImage( ":/images/mallow-neutral" ) );
-    m_mallowTextures << bindTexture( QImage( ":/images/mallow-icy" ) );
+    m_mallowTextures << bindTexture( QImage( ":/images/mallow-happy" ), GL_TEXTURE_2D, GL_BGRA, QGLContext::LinearFilteringBindOption );
 }
 
 void GLSLTestWidget::initEnvironmentData()
