@@ -278,7 +278,7 @@ void GLSLTestWidget::initEnvironmentData()
 
 void GLSLTestWidget::mousePressEvent(QMouseEvent *e)
 {
-    if ( e->button() == Qt::LeftButton ) {
+    if ( e->button() == Qt::RightButton ) {
         emit pressed(e->pos());
     } else {
         m_secondLastMousePosition = QPoint();
@@ -290,7 +290,7 @@ void GLSLTestWidget::mousePressEvent(QMouseEvent *e)
 
 void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 {
-    if ( e->button() == Qt::LeftButton ) {
+    if ( e->button() == Qt::RightButton ) {
         emit released();
     } else if ( !m_secondLastMousePosition.isNull() ) {
         const QPointF delta = m_lastMousePosition - m_secondLastMousePosition;
@@ -304,7 +304,7 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    if ( e->buttons() & Qt::RightButton ) {
+    if ( e->buttons() & Qt::LeftButton ) {
         m_hRotation += (m_lastMousePosition.x() - e->pos().x()) * xPanningMultiplier;
         m_vRotation = qBound(-89.0f, m_vRotation + (m_lastMousePosition.y() - e->pos().y()) * yPanningMultiplier, 89.0f);
 
