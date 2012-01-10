@@ -7,6 +7,14 @@
 #include <QMatrix4x4>
 #include <qmath.h>
 
+#ifdef QT_OPENGL_ES_2
+#include <GLES2/gl2extimg.h>
+#endif
+
+#if !defined(GL_BGRA) && defined(GL_BGRA_EXT)
+#define GL_BGRA_EXT GL_BGRA
+#endif
+
 #ifdef USE_FILE_SHADERS
 #define CUBE_VERTEX_SHADER_PATH      "z-bounce.vsh"
 #define CUBE_FRAGMENT_SHADER_PATH    "basic-texture.fsh"
@@ -274,7 +282,7 @@ void GLSLTestWidget::initEnvironmentData()
         }
 
         const QImage faceImage( QString(":/cubemaps/mountain/%1").arg(i+1) );
-        glTexImage2D( mapFaces[i], 0, GL_RGBA, faceImage.width(), faceImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, faceImage.bits() );
+        glTexImage2D( mapFaces[i], 0, GL_BGRA, faceImage.width(), faceImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, faceImage.bits() );
     }
 }
 
