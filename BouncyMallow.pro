@@ -18,3 +18,8 @@ OTHER_FILES += \
 
 
 
+
+unix:!symbian:!maemo5:isEmpty(MEEGO_VERSION_MAJOR) {
+    target.path = /opt/BouncyMallow/bin
+    INSTALLS += target
+}
