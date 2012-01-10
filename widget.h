@@ -7,6 +7,7 @@
 #include <QPair>
 #include <QVector2D>
 #include <QVector3D>
+#include <QMatrix4x4>
 
 class QGLShaderProgram;
 class QVariantAnimation;
@@ -64,6 +65,9 @@ private:
     QPoint m_secondLastMousePosition;
 
     QVariantAnimation* m_kineticAnimation;
+
+    bool  m_spinMallow;
+    QMatrix4x4 m_mallowRotationMatrix;
 };
 
 #endif // WIDGET_H

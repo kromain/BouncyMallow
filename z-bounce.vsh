@@ -6,6 +6,7 @@ attribute   highp   vec2 aTexCoord;
 attribute   highp   float vBounceRatio;
 
 // uniform attributes
+uniform     highp   mat4  rotationMatrix;
 uniform     highp   mat4  cameraMatrix;
 uniform     highp   mat4  projectionMatrix;
 
@@ -36,7 +37,7 @@ void main(void)
         }
     }
 
-    gl_Position = projectionMatrix * cameraMatrix * vertex;
+    gl_Position = projectionMatrix * cameraMatrix * rotationMatrix * vertex;
 
     outColor = vec4(colorRatio,colorRatio,colorRatio,1.0);
     outTexCoord = aTexCoord;

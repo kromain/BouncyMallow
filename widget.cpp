@@ -71,7 +71,10 @@ GLSLTestWidget::GLSLTestWidget( const QGLFormat& glFormat, QWidget *parent)
       m_vRotation(0.0),
       m_zOffset(-5.0),
       m_lastMousePosition(),
-      m_secondLastMousePosition()
+      m_secondLastMousePosition(),
+      m_kineticAnimation(0),
+      m_spinMallow(false),
+      m_mallowRotationMatrix()
 {
     QPropertyAnimation* pressAnimation = new QPropertyAnimation(this, "bounceRatio", this);
     pressAnimation->setEndValue( (GLfloat) 0.5);
@@ -201,6 +204,7 @@ void GLSLTestWidget::paintGL()
 
     m_cubeShaderProgram->setUniformValue("projectionMatrix", projectionMatrix);
     m_cubeShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
+    m_cubeShaderProgram->setUniformValue("rotationMatrix", m_mallowRotationMatrix);
 
     for (int face = 0; face < numCubeFaces; ++face) {
         glBindTexture( GL_TEXTURE_2D, m_mallowTextures.at( face % m_mallowTextures.size() ) );
@@ -286,40 +290,50 @@ void GLSLTestWidget::initEnvironmentData()
 
 void GLSLTestWidget::mousePressEvent(QMouseEvent *e)
 {
-    if ( e->button() == Qt::RightButton ) {
-        emit pressed(e->pos());
-    } else {
         m_secondLastMousePosition = QPoint();
         m_lastMousePosition = e->pos();
 
         m_kineticAnimation->stop();
-    }
+
+        // TODO: add real hit detection
+        const QRect mallowRect( rect().topLeft() + rect().center() * 0.8, rect().bottomRight() - rect().center() * 0.8);
+        m_spinMallow = mallowRect.contains(e->pos());
+        qDebug() << "spinMallow:" << m_spinMallow;
+
+        if ( m_spinMallow ) {
+            emit pressed(e->pos());
+        }
 }
 
 void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 {
-    if ( e->button() == Qt::RightButton ) {
-        emit released();
-    } else if ( !m_secondLastMousePosition.isNull() ) {
+    if ( !m_secondLastMousePosition.isNull() ) {
         const QPointF delta = m_lastMousePosition - m_secondLastMousePosition;
 
         if ( delta.manhattanLength() > 5.0 ) {
             m_kineticAnimation->setStartValue( QPointF(delta.x() * xPanningMultiplier, delta.y() * yPanningMultiplier) );
             m_kineticAnimation->start();
-        }
+        }        
+    }
+
+    if ( m_spinMallow ) {
+        emit released();
     }
 }
 
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    if ( e->buttons() & Qt::LeftButton ) {
-        m_hRotation += (m_lastMousePosition.x() - e->pos().x()) * xPanningMultiplier;
-        m_vRotation = qBound(-89.0f, m_vRotation + (m_lastMousePosition.y() - e->pos().y()) * yPanningMultiplier, 89.0f);
-
-        m_secondLastMousePosition = m_lastMousePosition;
-        m_lastMousePosition = e->pos();
-        updateGL();
+    const QPointF delta = e->pos() - m_lastMousePosition;
+    if ( m_spinMallow ) {
+        m_mallowRotationMatrix.rotate( delta.manhattanLength(), -delta.y(), -delta.x());
+    } else {
+        m_hRotation += delta.x() * xPanningMultiplier;
+        m_vRotation = qBound(-89.0f, m_vRotation + delta.y() * yPanningMultiplier, 89.0f);
     }
+
+    m_secondLastMousePosition = m_lastMousePosition;
+    m_lastMousePosition = e->pos();
+    updateGL();
 }
 
 void GLSLTestWidget::wheelEvent(QWheelEvent *e)
@@ -330,9 +344,13 @@ void GLSLTestWidget::wheelEvent(QWheelEvent *e)
 
 void GLSLTestWidget::updateKineticScrolling(const QVariant &value)
 {
-    m_hRotation -= value.toPointF().x();
-    m_vRotation = qBound(-89.0f, m_vRotation - value.toPointF().y(), 89.0f);
-    updateGL();
+    if ( m_spinMallow ) {
+        m_mallowRotationMatrix.rotate( value.toPointF().manhattanLength(), -value.toPointF().y(), -value.toPointF().x());
+    } else {
+        m_hRotation += value.toPointF().x();
+        m_vRotation = qBound(-89.0f, m_vRotation + value.toPointF().y(), 89.0f);
+        updateGL();
+    }
 }
 
 
