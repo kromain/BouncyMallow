@@ -179,7 +179,9 @@ void GLSLTestWidget::paintGL()
     m_envShaderProgram->setUniformValue("cameraMatrix", cameraMatrix);
 
     glBindTexture( GL_TEXTURE_CUBE_MAP, m_cubemapTexture );
-    glDrawArrays(GL_TRIANGLE_FAN, 0, numCubeFaces * numCubemapFaceVertices);
+    for (int face = 0; face < numCubeFaces; ++face) {
+        glDrawArrays(GL_TRIANGLE_FAN, face * numCubemapFaceVertices, numCubemapFaceVertices);
+    }
 
     m_cubeShaderProgram->bind();
 
