@@ -322,7 +322,12 @@ void GLSLTestWidget::mouseReleaseEvent(QMouseEvent *e)
 
 void GLSLTestWidget::mouseMoveEvent(QMouseEvent *e)
 {
-    const QPoint delta = e->pos() - m_lastMousePosition;
+    QPoint delta = e->pos() - m_lastMousePosition;
+    const QPoint prevDelta = m_lastMousePosition - m_secondLastMousePosition;
+
+    if ( delta.manhattanLength() > prevDelta.manhattanLength() * 2 )
+        delta = prevDelta;
+
     if ( m_spinMallow ) {
         m_mallowRotationMatrix.rotate( delta.manhattanLength(), -delta.y(), -delta.x());
     } else {
