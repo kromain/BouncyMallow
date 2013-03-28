@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="scripts/main.js"></script>
+	<style type="text/css">
+	html, body {
+		height: 100%;
+		margin: 0px;
+		padding: 0px;
+	}
+	#imgContainer {
+		position: absolute;
+		top:20px;
+		bottom:0;
+		left:0;
+		right:0;
+	}
+	#fpsLabel {
+		position: absolute;
+		top:0;
+		left:0;
+		right:0;
+		height: 20px;
+		margin: 0px;
+
+		color: red;
+		font-size: 20px;
+		font-weight: bold;
+	}
+	</style>
+</head>
+<body onload="start()">
+	<p id="fpsLabel">FPS: --</p>
+	<div id="imgContainer">
+		<img id="texture" src="../../images/success.jpg" />
+	</div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<html>
+<head>
+  <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+  <script type='text/javascript'>
+  google.load('visualization', '1', {packages:['table']});
+  google.setOnLoadCallback(drawTable);
+  function drawTable() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('number', 'Rank');
+    data.addColumn('string', 'Handle');
+    data.addColumn('number', 'Total Trophies');
+    data.addRows([
+      [{f:'1'}, 'Smaug', {f: '200'}],
+      [{f:'2'}, 'Dr. Strangelove', {f: '190'}],
+      [{f:'3'}, 'BilboBaggins', {f: '111'}],
+      [{f:'4'}, 'ElephantWoman', {f: '100'}],
+      [{f:'5'}, 'Dwarves', {f: '7'}],
+      [{f:'6'}, 'TheWhiteWizard', {f: '2'}],
+      [{f:'7'}, 'GandalfWasHere', {f: '1'}],
+      [{f:'8'}, 'SucksAtGaming', {f: '0'}],
+      ]);
+
+    var table = new google.visualization.Table(document.getElementById('table_div'));
+    table.draw(data);
+  }
+  </script>
+</head>
+
+<body>
+  <div id='table_div'></div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style type="text/css">
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0px;
+        padding: 0px;
+    }
+    body {
+        display: table;
+
+        background-color: gray;
+    }
+    #statusLabel {
+        display: table-cell;
+        vertical-align: middle;
+
+        color: dimgray;
+        font-size: 40px;
+        font-weight: bold;
+        text-align: center;
+    }
+</style>
+<script type="text/javascript">
+    function setupHandlers() {
+        var statusLabel = document.getElementById("statusLabel");
+
+        window.onfocus = function() {
+            document.body.style.backgroundColor = "green";
+            statusLabel.style.color = "darkgreen";
+            statusLabel.innerHTML = "Got Focus!";
+        }
+        window.onblur = function() {
+            document.body.style.backgroundColor = "gray";
+            statusLabel.style.color = "dimgray";
+            statusLabel.innerHTML = "Lost Focus!";
+        }
+        window.onmousedown = function() {
+            document.body.style.backgroundColor = "red";
+            statusLabel.style.color = "darkred";
+            statusLabel.innerHTML = "Button Press!";
+            window.location.href = "orbis://test.me?action=thisisatestnotification"
+        }
+        window.onmouseup = function() {
+            document.body.style.backgroundColor = "green";
+            statusLabel.style.color = "darkgreen";
+            statusLabel.innerHTML = "Button Release!";
+        }
+        window.onclick = function() {
+            statusLabel.innerHTML = "Got Click!";
+            window.location.href = "http://43.138.15.159:10003/iframeD/index.html"
+        }
+    }
+</script>
+</head>
+<body onload="setupHandlers()">
+    <div id="statusLabel">Hello Tile!</div>
+</body>
+</html>

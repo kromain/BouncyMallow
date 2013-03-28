@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Monsters', 'Slayings'],
+          ['Zombies',     418],
+          ['Vampires',      87],
+          ['Ghosts',  418],
+          ['Werewolfs', 226],
+          ['Demons',  666]
+        ]);
+
+        var options = {
+          title: 'My Monster Slayings'
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="chart_div"></div>
+  </body>
+</html>
