@@ -25,6 +25,7 @@ var destroyTimeoutCounter;
 
 var animateTiles = true;
 var lastFrameTime;
+var showFPSCounter = false;
 
 //---------------------------------------------------------------------
 // The matrices
@@ -143,7 +144,7 @@ function Sprite(width, height, url) {
   var loadingImage = new Image();
   loadingImage.src = "images/loading_wh.gif";
   loadingImage.onload = function() {
-    if (!that._gotonload)
+      if (!that._gotonload)
       that._onTextureLoaded(loadingImage);
   };
 
@@ -221,11 +222,9 @@ Sprite.prototype.clear = function() {
  *
  * Dead simple animation of sprite's bouncing around an enclosed area.
  */
-Sprite.prototype.update = function(time) {
+Sprite.prototype.update = function(delta) {
   //console.time("Sprite.update");
-  
-  this._position[0] += this._velocity[0] * time;
-  this._position[1] += this._velocity[1] * time;
+  this.setPosition([this._position[0] + this._velocity[0] * delta, this._position[1] + this._velocity[1] * delta, 1.0]);
   
   if ((this._position[0] < -halfViewportWidth) && (this._velocity[0] < 0.0)) {
     this._velocity[0] = -this._velocity[0];
@@ -238,17 +237,7 @@ Sprite.prototype.update = function(time) {
   }
   if ((this._position[1] > halfViewportHeight) && (this._velocity[1] > 0.0)) {
     this._velocity[1] = -this._velocity[1];
-  }
-  
-  if (gl) {
-    // Update the model matrix.
-    mat4.identity(this._modelMatrix);
-    mat4.translate(this._modelMatrix, this._position);
-
-    // Compute the model view matrix for the sprite.
-    mat4.multiply(viewProjectionMatrix, this._modelMatrix, this._modelViewProjectionMatrix);
-  }
-  
+  }  
   //console.timeEnd("Sprite.update");
 }
 
@@ -290,17 +279,11 @@ Sprite.prototype.update = function(time) {
     // Draw the cube.
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   } else {
-    // Simple coordinate calculation, we don't use matrices here (though we could)
-    // The factors 6.0 and 3.0 come from the X and Y position ranges which are 3.0 and 1.5 (see update() above)
-    // which we divide by two since we only go half on each side of the canvas (0,0 is in the center)
-    var xPos = halfViewportWidth + this._position[0] - pixelsToWidth(tileWidth) / 2;
-    var yPos = halfViewportHeight + this._position[1] - pixelsToHeight(tileHeight) / 2;
-
     ctx2d.fillStyle = 'gray';
     ctx2d.font = "16px sans-serif";
-    ctx2d.fillText(this._log, xPos / viewportWidth * canvas.width, yPos / viewportHeight * canvas.height);
 
-    ctx2d.drawImage(this._texture, xPos / viewportWidth * canvas.width, yPos / viewportHeight * canvas.height);
+    ctx2d.fillText(this._log, this._canvasX , this._canvasY);
+    ctx2d.drawImage(this._texture, this._canvasX, this._canvasY, tileWidth, tileHeight);
   }
   
   //console.timeEnd("Sprite.draw");
@@ -315,11 +298,18 @@ Sprite.prototype.setPosition = function(position) {
   vec3.set(position, this._position);
 
   if (gl) {
+    // Update the model matrix.
     mat4.identity(this._modelMatrix);
     mat4.translate(this._modelMatrix, this._position);
-      // Compute the model view matrix for the sprite.
+
+    // Compute the model view matrix for the sprite.
     mat4.multiply(viewProjectionMatrix, this._modelMatrix, this._modelViewProjectionMatrix);
-  }
+  } else {
+    var xPos = halfViewportWidth + this._position[0] - pixelsToWidth(tileWidth) / 2;
+    this._canvasX = Math.round(xPos / viewportWidth * canvas.width);
+    var yPos = halfViewportHeight + this._position[1] - pixelsToHeight(tileHeight) / 2;
+    this._canvasY = Math.round(yPos / viewportHeight * canvas.height);
+  }  
 }
 
 /**
@@ -392,7 +382,7 @@ function pixelsToHeight(pixels) {
  * otherwise they will be removed.
  */
 function updateSpritesCount() {
-  var newSpriteCount = spriteCounter ? spriteCounter.value : 1;
+  var newSpriteCount = spriteCounter ? spriteCounter.value : textures.length;
   var currentSpriteCount = sprites.length;
   
   if (newSpriteCount > currentSpriteCount) {
@@ -405,8 +395,8 @@ function updateSpritesCount() {
       
       sprite.setPosition([randX, randY, 1.0]);
       
-      randX = (Math.random() * 8.0) - 4.0;
-      randY = (Math.random() * 8.0) - 4.0;
+      randX = (Math.random() * 0.02) - 0.01;
+      randY = (Math.random() * 0.02) - 0.01;
       
       sprite.setVelocity([randX, randY, 0.0]);
       sprite.setVelocity([randX, randY, 0.0]);
@@ -430,35 +420,6 @@ function deleteOneSpriteOrReset() {
 
   if (destroyTimeoutCounter)
     window.setTimeout(deleteOneSpriteOrReset, destroyTimeoutCounter.value * 1000);
-}
-
-// var spriteX = -halfViewportWidth;
-// var spriteY = -halfViewportHeight;
-function layoutSprites() {
-  if (!sprites.length)
-    return;
-
-  // var xDelta = pixelsToWidth(tileWidth+2);
-  // var yDelta = pixelsToHeight(tileHeight+2);
-  var xDelta = 1.2;
-  var yDelta = 1.2;
-  var xStart = 0;
-  var yStart = 0; // TODO
-
-  var spriteX = xStart;
-  var spriteY = yStart;
-  // Static layout in a 4*n grid
-  for (var i = 0; i < sprites.length; ++i) {
-    sprites[i].setPosition([spriteX, spriteY, 1.0]);
-
-    spriteX += xDelta;
-    if (spriteX >= halfViewportWidth) {
-      spriteX = -halfViewportWidth;
-      spriteY += yDelta;
-      if (spriteY >= halfViewportHeight)
-        spriteY = -halfViewportHeight;
-    }
-  }
 }
 
 function toggleTilesPauseResume() {
@@ -646,6 +607,64 @@ function initWebGL() {
   }
 }
 
+function clearScene() {
+
+    if (gl) {
+    // Clear the canvas before we start drawing on it.
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  } else {
+    ctx2d.fillStyle = "lightsteelblue";
+    var labelHeight = 20;
+
+    if (!lastFrameTime)
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height); // first paint, clear everything
+    else if(showFPSCounter)
+      ctx2d.clearRect(20, 0, 100, labelHeight); // just for the FPS label area
+
+    for (var i = 0; i < sprites.length; ++i) {
+      ctx2d.clearRect(sprites[i]._canvasX, sprites[i]._canvasY - labelHeight, tileWidth, tileHeight + labelHeight);
+    }
+
+  }
+
+}
+
+// var spriteX = -halfViewportWidth;
+// var spriteY = -halfViewportHeight;
+function layoutSprites(frameDelta) {
+  if (animateTiles) {
+    for (var i = 0; i < sprites.length; ++i)
+       sprites[i].update(frameDelta);
+  } else {
+    // var xDelta = pixelsToWidth(tileWidth+2);
+    // var yDelta = pixelsToHeight(tileHeight+2);
+    var xDelta = 1.2;
+    var yDelta = 1.2;
+    var xStart = 0;
+    var yStart = 0; // TODO
+
+    var spriteX = xStart;
+    var spriteY = yStart;
+    // Static layout in a 4*n grid
+    for (var i = 0; i < sprites.length; ++i) {
+      sprites[i].setPosition([spriteX, spriteY, 1.0]);
+
+      spriteX += xDelta;
+      if (spriteX >= halfViewportWidth) {
+        spriteX = -halfViewportWidth;
+        spriteY += yDelta;
+        if (spriteY >= halfViewportHeight)
+          spriteY = -halfViewportHeight;
+      }
+    }
+  }
+}
+
+function drawSprites() {
+  for (var i = 0; i < sprites.length; ++i)
+    sprites[i].draw();
+}
+
 /**
  * Draw the scene.
  *
@@ -656,55 +675,38 @@ function drawScene(time) {
   // Request next draw right away
   window.requestAnimationFrame(drawScene);
 
-  //console.time("drawScene");
-
-  if (gl) {
-    // Clear the canvas before we start drawing on it.
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  } else {
-    ctx2d.fillStyle = "lightsteelblue";
-    ctx2d.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  // console.time("drawScene");
+  clearScene();
 
   var dt = (lastFrameTime) ? time - lastFrameTime : 0;
   var fps = dt ? 1000 / dt : 0;
-  //console.log("delta: " + dt);
-  dt *= 0.0001;
+  var frameDelta = (dt) ? Math.round(dt/16) : 0;
+  // console.log("frame delta: " + frameDelta);
   
   lastFrameTime = time;
   
-  var spriteCount = sprites.length;
-
   // Update the sprites
   // Done in two steps so the updating and drawing can be profiled separately  
   // console.time("update");
   
-  if (animateTiles) {
-    for (var i = 0; i < spriteCount; ++i) {
-      sprites[i].update(dt);
-    }
-  } else {
-    layoutSprites();
-  }
+  layoutSprites(frameDelta);
   
   // console.timeEnd("update");
   
   // Draw the sprites
   // console.time("draw");
-  
-  for (var i = 0; i < spriteCount; ++i) {
-    sprites[i].draw();
-  }
+
+  drawSprites();
   
   // console.timeEnd("draw");
 
-  if (ctx2d) {
+  if (ctx2d && showFPSCounter) {
     ctx2d.fillStyle = 'red';
     ctx2d.font = "20px sans-serif";
     ctx2d.fillText("FPS: " + Math.round(fps), 20, 20);
   }
   
-  //console.timeEnd("drawScene");
+  // console.timeEnd("drawScene");
 }
 
 //---------------------------------------------------------------------
