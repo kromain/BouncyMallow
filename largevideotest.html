@@ -49,26 +49,48 @@ body, html {
 </style>
 <script src="scripts/gl-matrix-min.js" type="text/javascript"></script>
 <script src="scripts/tiledemo.js" type="text/javascript"></script>
+<script src="scripts/htmltile-shim.js" type="text/javascript"></script>
+<script src="scripts/query-args.js" type="text/javascript"></script>
 <script type="text/javascript">
-  function initTiles () {
-    animateTiles = false;
-    tileWidth = 520;
-    tileHeight = 250;
+  function init() {
     textures = [
       '/tiles/videotest/index.html',
-      ];
+    ];
 
-      window.onmousedown = function() {
-        var playIcon = document.getElementById('playIcon');
-        playIcon.style.opacity = playIcon.style.opacity ? 1.0 - playIcon.style.opacity : 0.0;
+    extractQueryArgs();
+    if (queryArgs.usewebgl != undefined)
+      document.getElementById('usewebgl').checked = queryArgs.usewebgl;
 
-        sprites[0]._tile.sendEvent(HTMLTile.ButtonPress);
-      }
+    if (queryArgs.animatetiles != undefined)
+      animatetiles = queryArgs.animatetiles;
+    else
+      animateTiles = false;
+
+    if (queryArgs.tilewidth != undefined)
+      tileWidth = queryArgs.tilewidth;
+    else
+      tileWidth = 1090;
+
+    if (queryArgs.tileheight != undefined)
+      tileHeight = queryArgs.tileheight;
+    else
+      tileHeight = 613;
+
+    registerHTMLTileShimIfNeeded();
+
+    window.onmousedown = function() {
+      var playIcon = document.getElementById('playIcon');
+      playIcon.style.opacity = playIcon.style.opacity ? 1.0 - playIcon.style.opacity : 0.0;
+
+      sprites[0]._tile.sendEvent(HTMLTile.ButtonPress);
+    }
+
+    start();
   }
 </script>
 </head>
 
-<body onload="initTiles(); start();">
+<body onload="init()">
 <div id="canvas_wrap">
   <div id="layer0">
     <img id="playIcon" src="images/play_button.png"/>
