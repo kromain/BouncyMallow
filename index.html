@@ -65,6 +65,9 @@ body, html {
     if (queryArgs.tileheight != undefined)
       tileHeight = queryArgs.tileheight;
 
+    if (queryArgs.showfps != undefined)
+      showFPSCounter = queryArgs.showfps;
+
     registerHTMLTileShimIfNeeded();
 
     start();
