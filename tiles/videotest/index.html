@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<title>Video tile test</title>
 	<style type="text/css">
 	html, body {
         height: 100%;
@@ -20,6 +21,7 @@
 			document.getElementById('yayvideo').play();
 		else
 			document.getElementById('yayvideo').pause();
+		console.log("toggleVideo=" + isplaying);
 		isplaying = !isplaying;
 	}
 	window.onmousedown = toggleVideo;
@@ -39,8 +41,8 @@
 	</script>
 </head>
 <body onload="videoAutoplayWorkaround()">
-  <video id="yayvideo">
-    <source src="gow.mp4" type="video/mp4"/>
+  <video id="yayvideo" autoplay>
+    <source src="http://clips.vorwaerts-gmbh.de/VfE_html5.mp4" type="video/mp4"/> 
   </video>
 </body>
 </html>
