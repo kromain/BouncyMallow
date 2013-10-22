@@ -1,6 +1,4 @@
 
-var fibValue = 0;
-var pingCounter = 1;
 
 function start() {
   // Setup the animation frames
@@ -12,23 +10,24 @@ function start() {
   } else {
     window.requestAnimationFrame = requestAnimationFrame;
   }
-  window.requestAnimationFrame(doStuff);
+  window.setInterval(doStuff, 3000);
+}
 
-  window.onmousedown = function() {
-    document.getElementById('pingLabel').innerHTML = "Got ping " + pingCounter++;
+function transmogrify(number) {
+  try {
+    var res = Number.MAX_VALUE;
+    while (res > 1) {
+      res = res / number;
+    }
+    return res;
+  } catch(err) {
+    console.error("Ouch! Got exception: " + err);
+    return -1;
   }
 }
 
-function fib(number) {
-  if (number < 2)
-    return number;
-  return fib(number-2) + fib(number-1);
-}
-
 function doStuff(time) {
-  // Request next frame right away
-  window.requestAnimationFrame(doStuff);
-
-  document.getElementById('fibSeries').innerHTML = fibValue + " -> " + fib(fibValue);
-  fibValue++;
+    var randomNum = Math.ceil(Math.random() * 10);
+    var res = transmogrify(randomNum);
+    document.getElementById('numLabel').innerHTML = randomNum + " -> " + res;
 }

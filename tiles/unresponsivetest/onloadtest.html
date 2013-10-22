@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<title>Unresponsive Page</title>
+	<style>
+		body{margin:2px;}	
+	</style>
+	<script>
+		window.onmousedown = mousedown;
+		
+		function mousedown(){
+			loop();
+		}
+
+		function loop(){
+			<!-- console.log("Inside loop()."); -->
+			while(true){
+				var sum = 1 + 1;
+			}
+			<!-- console.log("Outside loop.") -->
+		}
+		
+		function call_loop(){
+			var ret = "Waiting for the loop() function to return...";
+			<!-- console.log(ret); -->
+			ret = loop();
+			<!-- console.log(ret); -->
+		}
+	</script>
+  </head>
+
+  <body onload="call_loop();">
+	<div id="unresponsive_page">Waiting for the loop() function to return...</div>
+  </body>
+</html>
