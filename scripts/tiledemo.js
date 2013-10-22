@@ -24,6 +24,7 @@ var destroyTimeoutCounter;
 //---------------------------------------------------------------------
 
 var animateTiles = true;
+var opaqueTiles = false;
 var lastFrameTime;
 var showFPSCounter = false;
 
@@ -127,34 +128,33 @@ function Sprite(width, height, url) {
 
   this._modelViewProjectionMatrix = mat4.create();
 
+  this._static = opaqueTiles && !animateTiles;
   this._log = "Event handlers:\n";
+  this._gotonload = false;
+  this._gotonlocationchange = false;
   
   var that = this; // *shakes fist*
   
   this._tile = new HTMLTile(tileWidth,tileHeight);
 
-  this._gotonload = false;
   this._tile.onload = function() {
     that._gotonload = true;
-    that._gotonlocationchange = false;
-    that._texture = null;
     that._log = "got onload for " + that._tile.src + "!\n";
   };
 
   var loadingImage = new Image();
   loadingImage.src = "images/loading_wh.gif";
   loadingImage.onload = function() {
-      if (!that._gotonload)
+    if (!that._gotonload)
       that._onTextureLoaded(loadingImage);
   };
 
   var updateCount = 0;
   this._tile.onupdate = function() {
-    if (that._gotonload) {
-      that._onTextureLoaded(that._tile);
-      if (!that._gotonlocationchange)
-        that._log = "got onupdate " + updateCount++ + "!\n";
-    }
+    that._onTextureLoaded(that._tile);
+    if (!that._gotonlocationchange)
+      that._log = "got onupdate " + updateCount++ + "!\n";
+    redrawScene();
   };
 
   this._gotonlocationchange = false;
@@ -171,7 +171,7 @@ function Sprite(width, height, url) {
 
   this._tile.onunresponsive = function() {
     that._log = "! Unresponsive Tile !";
-    //that._tile.destroy();
+    that._tile.destroy();
   }
 
   this._tile.oncrash = function() {
@@ -283,7 +283,10 @@ Sprite.prototype.update = function(delta) {
     ctx2d.font = "16px sans-serif";
 
     ctx2d.fillText(this._log, this._canvasX , this._canvasY);
-    ctx2d.drawImage(this._texture, this._canvasX, this._canvasY, tileWidth, tileHeight);
+    if (this._static)
+      ctx2d.putImageData(this._texture, this._canvasX, this._canvasY);
+    else
+      ctx2d.drawImage(this._texture, this._canvasX, this._canvasY, tileWidth, tileHeight);
   }
   
   //console.timeEnd("Sprite.draw");
@@ -348,12 +351,16 @@ Sprite.prototype._onTextureLoaded = function(image) {
     gl.bindTexture(gl.TEXTURE_2D, null);
   } else {
     if (image.imageData) {
-      if (!this._texture) {
-        this._texture = document.createElement("canvas");
-        this._texture.width = image.imageData.width;
-        this._texture.height = image.imageData.height;        
+      if (this._static) {
+        this._texture = image.imageData;
+      } else {
+        if (!this._texture || !this._texture.getContext) {
+          this._texture = document.createElement("canvas");
+          this._texture.width = image.imageData.width;
+          this._texture.height = image.imageData.height;        
+        }
+        this._texture.getContext("2d").putImageData(image.imageData, 0,0);
       }
-      this._texture.getContext("2d").putImageData(image.imageData, 0,0);
     } else {
       this._texture = image;
     }
@@ -443,6 +450,7 @@ function start() {
 
     animateTilesCheckbox.onchange = function() {
       animateTiles = animateTilesCheckbox.checked;
+      redrawScene();
     };
   }
 
@@ -537,8 +545,7 @@ function resetCanvas() {
   // This will recreate all sprites for the matching canvas type
   updateSpritesCount();
 
-  // start the animation loop
-  window.requestAnimationFrame(drawScene);
+  redrawScene();
 }
 
 function init2DCanvas() {
@@ -622,7 +629,10 @@ function clearScene() {
       ctx2d.clearRect(20, 0, 100, labelHeight); // just for the FPS label area
 
     for (var i = 0; i < sprites.length; ++i) {
-      ctx2d.clearRect(sprites[i]._canvasX, sprites[i]._canvasY - labelHeight, tileWidth, tileHeight + labelHeight);
+      if (sprites[i]._static)
+        ctx2d.clearRect(sprites[i]._canvasX, sprites[i]._canvasY - labelHeight, tileWidth, labelHeight);
+      else
+        ctx2d.clearRect(sprites[i]._canvasX, sprites[i]._canvasY - labelHeight, tileWidth, tileHeight + labelHeight);
     }
 
   }
@@ -667,13 +677,14 @@ function drawSprites() {
 
 /**
  * Draw the scene.
- *
  * @param {number} time The current time.
  */
 function drawScene(time) {
 
-  // Request next draw right away
-  window.requestAnimationFrame(drawScene);
+  drawScenePending = false;
+  // If animating, request next draw right away
+  if (animateTiles)
+    redrawScene();
 
   // console.time("drawScene");
   clearScene();
@@ -707,6 +718,15 @@ function drawScene(time) {
   }
   
   // console.timeEnd("drawScene");
+}
+
+var drawScenePending = false;
+function redrawScene() {
+  if (drawScenePending)
+    return;
+
+  window.requestAnimationFrame(drawScene);
+  drawScenePending = true;
 }
 
 //---------------------------------------------------------------------
