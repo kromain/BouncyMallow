@@ -9,3 +9,17 @@ function extractQueryArgs() {
     }
   }
 }
+
+function buildQueryString(queryargs) {
+  var queryString = "";
+  for(var arg in queryargs) {
+    queryString += queryString ? "&" : "?";
+
+    if (typeof(queryargs[arg]) === "boolean" && queryargs[arg])
+      queryString += arg;
+    else
+      queryString += arg + "=" + queryargs[arg];
+  }
+
+  return queryString;
+}
