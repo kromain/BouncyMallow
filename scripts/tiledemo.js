@@ -203,7 +203,9 @@ function Sprite(width, height, url) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);    
   }
 
-  this._tile.src = (url.indexOf("http") == 0) ? url : window.location.origin + url;
+  if (url.indexOf("http") != 0)
+    url = location.origin + location.pathname.substring(0, location.pathname.lastIndexOf('/')) + url;
+  this._tile.src = url;
 }
 
 /**
