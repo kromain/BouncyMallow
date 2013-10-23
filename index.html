@@ -23,6 +23,7 @@ body, html {
   display: inline-block;
   box-sizing: border-box;
   height: 100%;
+  width: 250px;
 
   background: rgba(0, 0, 0, 0.85);
   padding: 10px;
@@ -32,13 +33,26 @@ body, html {
 }
 #controls h2 {
   margin: 0px;
+  margin-top: 20px;
   border-bottom: 1px solid white;
+}
+
+#controls table {
+  width: 100%;
+}
+#controls input[type="number"] {
+  width: 100%;
+}
+#controls input[type="url"] {
+  width: 100%;
 }
 </style>
 <script src="scripts/query-args.js" type="text/javascript"></script>
 <script type="text/javascript">
+
   function init() {
     initParameters();
+    initXRayURL();
     registerLinkOnClickEventHandler();
   }
 
@@ -64,6 +78,16 @@ body, html {
       document.getElementById('destroytimeout').value = queryArgs.destroytimeout;
   }
 
+  function initXRayURL() {
+    document.getElementById('xrayurl').value = queryArgs.xRayURL ? queryArgs.xRayURL : location.origin + "/X-ray/index.html";
+    document.getElementById('usexray').checked = queryArgs.xRayURL;
+    showHideXRayUrl();
+  }
+
+  function showHideXRayUrl() {
+    document.getElementById('xrayurl').style.display = (document.getElementById('usexray').checked ? "inline-block" : "none");
+  }
+
   function getParameters() {
     var parameters = new Object();
     parameters['usewebgl'] = document.getElementById('usewebgl').checked;
@@ -86,7 +110,11 @@ body, html {
 
   function appendQueryParams(e) {
     var elem = e.target;
-    elem.href += buildQueryString(getParameters());
+
+    if (document.getElementById('usexray').checked)
+      elem.href = document.getElementById('xrayurl').value + "?host=" + elem.host + "&path=" + elem.pathname + "&args=" + buildArgvString(getParameters());
+    else
+      elem.href += buildQueryString(getParameters());
     return true;
   }
 </script>
@@ -97,10 +125,6 @@ body, html {
     <h2>Test Settings</h2>
     <table>
     <tr>
-      <td>Use WebGL:</td>
-      <td><input id='usewebgl' type="checkbox" /></td>
-    </tr>
-    <tr>
       <td>Show Controls:</td>
       <td><input id='showcontrols' type="checkbox" /></td>
     </tr>
@@ -108,7 +132,16 @@ body, html {
       <td>Show FPS Counter:</td>
       <td><input id='showfps' type="checkbox" /></td>
     </tr>
+    <tr>
+      <td>Use WebGL:</td>
+      <td><input id='usewebgl' type="checkbox" /></td>
+    </tr>
+    <tr>
+      <td>Use X-ray Profiler:</td>
+      <td><input id='usexray' type="checkbox" onclick="showHideXRayUrl()"/></td>
+    </tr>
     </table>
+    <input id='xrayurl' type="url" />
     <h2>HTMLTile Settings</h2>
     <table>
     <tr>
