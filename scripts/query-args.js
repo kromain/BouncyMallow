@@ -44,6 +44,8 @@ function parseObject(str, obj) {
       var val = {};
       obj.res[argv[i]] = (parseNumber(argv[i+1], val) || parseBool(argv[i+1], val)) ? val.res : argv[i+1];
     }
+
+    return true;
 }
 
 function buildQueryString(queryargs) {
