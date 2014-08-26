@@ -79,14 +79,17 @@ body, html {
   function initTextures () {
     textures = [
       '/tiles/eventstest/index.html',
-//      '/tiles/animationtest/index.html',
+      '/tiles/animationtest/index.html',
       'http://www.yahoo.co.jp',
       'https://www.google.com',
-      'http://24.media.tumblr.com/cfa55f70bbc5ce545eed804fa61a9d26/tumblr_mfpmmdCdWA1s1r5leo1_500.gif',
+      // 'http://24.media.tumblr.com/cfa55f70bbc5ce545eed804fa61a9d26/tumblr_mfpmmdCdWA1s1r5leo1_500.gif',
       // '/tiles/videotest/index.html?autoplay=1',
       // '/tiles/unresponsivetest/index.html',
       // '/tiles/charttest/index.html',
     ];
+
+    tileWidth = 250;
+    tileHeight = 250;
   }
 
   function autoPauseResumeTiles() {
@@ -95,6 +98,28 @@ body, html {
     // modifying the checked property doesn't actually trigger the onchange handler
     toggleTilesPauseResume();
     window.setTimeout(autoPauseResumeTiles, queryArgs.autopauseresume * 1000);
+  }
+
+  var intervalId = 0;
+  function reloadTiles() {
+    var reloadTimeout = document.getElementById('reloadtimeout');
+    if (!reloadTimeout.valueAsNumber) {
+      reloadTimeout.valueAsNumber = 5;
+      intervalId = window.setInterval(doReloadTiles, reloadTimeout.valueAsNumber * 1000);
+    } else {
+      reloadTimeout.valueAsNumber = 0;
+      if (intervalId)
+        window.clearInterval(intervalId);
+    }
+
+    doReloadTiles();
+  }
+
+  function doReloadTiles() {
+    while (sprites.length)
+      sprites.pop().clear();
+
+    updateSpritesCount();
   }
 </script>
 </head>
@@ -114,19 +139,27 @@ body, html {
     <table>
     <tr>
       <td>Tiles:</td>
-      <td><input id="tilecount" type="number" min="0" max="3000" step="1" value="4" /></td>
+      <td><input id="tilecount" type="number" min="0" max="3000" step="1" value="1" /></td>
     </tr>
     <tr>
       <td>Animate Tiles:</td>
-      <td><input id='animatetiles' type="checkbox" checked="true" /></td>
+      <td><input id='animatetiles' type="checkbox" /></td>
     </tr>
     <tr>
       <td>Pause Tiles:</td>
       <td><input id='pausetiles' type="checkbox" /></td>
     </tr>
     <tr>
+      <td>Reload Tiles:</td>
+      <td><input id="reloadtiles" type="button" value="Reload" onclick="reloadTiles()" /></td>
+    </tr>
+    <tr>
+      <td>Reload timeout:</td>
+      <td><input id="reloadtimeout" type="number" min="0" max="100" step="11" value="5" /></td>
+    </tr>
+    <tr>
       <td>Destroy timeout:</td>
-      <td><input id="destroytimeout" type="number" min="1" max="100" step="1" value="1000" /></td>
+      <td><input id="destroytimeout" type="number" min="0" max="100" step="1" value="0" /></td>
     </tr>
     <tr>
       <td>Focus test:</td>

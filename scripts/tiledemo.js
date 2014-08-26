@@ -171,12 +171,12 @@ function Sprite(width, height, url) {
 
   this._tile.onunresponsive = function() {
     that._log = "! Unresponsive Tile !";
-    that._tile.destroy();
+    //that._tile.destroy();
   }
 
   this._tile.oncrash = function() {
     that._log = "!!! TILE CRASHED !!!";
-    //that._tile.destroy();
+    that._tile.destroy();
   }
 
   if (gl) {
@@ -427,8 +427,8 @@ function deleteOneSpriteOrReset() {
   else
     updateSpritesCount();
 
-  if (destroyTimeoutCounter)
-    window.setTimeout(deleteOneSpriteOrReset, destroyTimeoutCounter.value * 1000);
+  if (destroyTimeoutCounter && destroyTimeoutCounter.valueAsNumber)
+    window.setTimeout(deleteOneSpriteOrReset, destroyTimeoutCounter.valueAsNumber * 1000);
 }
 
 function toggleTilesPauseResume() {
@@ -474,8 +474,8 @@ function start() {
   }
 
   destroyTimeoutCounter = document.getElementById('destroytimeout');
-  if (destroyTimeoutCounter) {
-    window.setTimeout(deleteOneSpriteOrReset, destroyTimeoutCounter.value * 1000);
+  if (destroyTimeoutCounter && destroyTimeoutCounter.valueAsNumber) {
+    window.setTimeout(deleteOneSpriteOrReset, destroyTimeoutCounter.valueAsNumber * 1000);
   }
 
   // Setup the callback for the tile focus tester
@@ -648,12 +648,10 @@ function layoutSprites(frameDelta) {
     for (var i = 0; i < sprites.length; ++i)
        sprites[i].update(frameDelta);
   } else {
-    // var xDelta = pixelsToWidth(tileWidth+2);
-    // var yDelta = pixelsToHeight(tileHeight+2);
-    var xDelta = 1.2;
-    var yDelta = 1.2;
-    var xStart = 0;
-    var yStart = 0; // TODO
+    var xDelta = pixelsToWidth(tileWidth+10);
+    var yDelta = pixelsToHeight(tileHeight+20);
+    var xStart = -halfViewportWidth + xDelta;
+    var yStart = -halfViewportHeight + yDelta;
 
     var spriteX = xStart;
     var spriteY = yStart;
@@ -663,10 +661,10 @@ function layoutSprites(frameDelta) {
 
       spriteX += xDelta;
       if (spriteX >= halfViewportWidth) {
-        spriteX = -halfViewportWidth;
+        spriteX = -halfViewportWidth + xDelta;
         spriteY += yDelta;
         if (spriteY >= halfViewportHeight)
-          spriteY = -halfViewportHeight;
+          spriteY = -halfViewportHeight + yDelta;
       }
     }
   }

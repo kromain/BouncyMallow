@@ -126,7 +126,7 @@ body, html {
     <table>
     <tr>
       <td>Show Controls:</td>
-      <td><input id='showcontrols' type="checkbox" /></td>
+      <td><input id='showcontrols' type="checkbox" checked="true" /></td>
     </tr>
     <tr>
       <td>Show FPS Counter:</td>
@@ -138,7 +138,7 @@ body, html {
     </tr>
     <tr>
       <td>Use X-ray Profiler:</td>
-      <td><input id='usexray' type="checkbox" onclick="showHideXRayUrl()"/></td>
+      <td><input id='usexray' type="checkbox" onclick="showHideXRayUrl()" /></td>
     </tr>
     </table>
     <input id='xrayurl' type="url" />
@@ -154,15 +154,15 @@ body, html {
     </tr>
     <tr>
       <td>Tile Width:</td>
-      <td><input id="tilewidth" type="number" min="10" max="3000" step="10" value="250" /></td>
+      <td><input id="tilewidth" type="number" min="10" max="3000" step="10" value="520" /></td>
     </tr>
     <tr>
       <td>Tile Height:</td>
-      <td><input id="tileheight" type="number" min="10" max="3000" step="10" value="250" /></td>
+      <td><input id="tileheight" type="number" min="10" max="3000" step="10" value="520" /></td>
     </tr>
     <tr>
       <td>Tile Destroy Timeout:</td>
-      <td><input id="destroytimeout" type="number" min="1" max="100" step="1" value="1000" /></td>
+      <td><input id="destroytimeout" type="number" min="0" max="100" step="1" value="0" /></td>
     </tr>
     </table>
   </div>
