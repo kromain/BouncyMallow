@@ -13,23 +13,23 @@
 		}
 
 		function loop(){
-			<!-- console.log("Inside loop()."); -->
+			console.log("Inside loop().");
 			while(true){
 				var sum = 1 + 1;
 			}
-			<!-- console.log("Outside loop.") -->
+			console.log("Outside loop.")
 		}
 		
 		function call_loop(){
 			var ret = "Waiting for the loop() function to return...";
-			<!-- console.log(ret); -->
+			console.log(ret);
 			ret = loop();
-			<!-- console.log(ret); -->
+			console.log(ret);
 		}
 	</script>
   </head>
 
-  <body onload="call_loop();">
+  <body onload="call_loop()">
 	<div id="unresponsive_page">Waiting for the loop() function to return...</div>
   </body>
 </html>
