@@ -98,6 +98,7 @@ body, html {
     parameters['tileheight'] = document.getElementById('tileheight').value;
     parameters['animatetiles'] = document.getElementById('animatetiles').checked;
     parameters['destroytimeout'] = document.getElementById('destroytimeout').value;
+    parameters['autoslide'] = document.getElementById('autoslide').checked;
 
     return parameters;
   }
@@ -165,6 +166,13 @@ body, html {
       <td><input id="destroytimeout" type="number" min="0" max="100" step="1" value="0" /></td>
     </tr>
     </table>
+    <h2>Sliding textures Settings</h2>
+    <table>
+    <tr>
+      <td>Start Automatically:</td>
+      <td><input id="autoslide" type="checkbox" checked="true" /></td>
+    </tr>
+    </table>
   </div>
   <div id="contents">
     <h1>HTMLTile Tests</h1>
@@ -175,9 +183,9 @@ body, html {
       <li><a href="evaltest.html">Tile eval()</a></li>
       <li><a href="unresponsivetiletest.html">Unresponsive tiles</a></li>
     </ul>
-    <h1>Individual tiles</h1>
+    <h1>Misc Tests</h1>
     <ul>
-      <li>TODO</li>
+      <li><a href="slidingtextures.html">Sliding textures (async image decoding test)</a></li>
     </ul>
   </div>
 </body>
