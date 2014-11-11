@@ -387,7 +387,8 @@ function initWebGLCanvas() {
     gl.cullFace(gl.BACK);
     gl.frontFace(gl.CCW);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
     // Set the viewport
     gl.viewport(0.0, 0.0, canvas.width, canvas.height);
