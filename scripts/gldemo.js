@@ -5,6 +5,7 @@
 var canvas;
 var ctx2d;
 var gl;
+var bgra;
 
 var viewportWidth = 8.0;
 var viewportHeight = 4.0;
@@ -253,10 +254,12 @@ Sprite.prototype.updateTexture = function() {
   this._texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, this._texture);
 
+  format = bgra ? bgra.BGRA_EXT : gl.RGBA;
+  
   if (this._img.imageData)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._img.imageData);
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, format, gl.UNSIGNED_BYTE, this._img.imageData);
   else
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._img);      
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, format, gl.UNSIGNED_BYTE, this._img);      
   
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -429,6 +432,9 @@ function initWebGL() {
     // If we don't have a GL context, give up now
     alert("Unable to initialize WebGL. Your browser may not support it.");
   }
+
+  // Check for PS4-specific BGRA_EXT extension
+  bgra = gl.getExtension('EXT_texture_format_BGRA8888');
 }
 
 function clearScene() {
